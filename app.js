@@ -1,12 +1,11 @@
 const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
-
+const { jokes } = require('./jokes');
 const { App } = require('@slack/bolt');
 
 // Require the Node Slack SDK package (github.com/slackapi/node-slack-sdk)
 const { WebClient, LogLevel } = require('@slack/web-api');
-const { processStepMiddleware } = require('@slack/bolt/dist/WorkflowStep');
 
 // WebClient insantiates a client that can call API methods
 // When using Bolt, you can use either `app.client` or the `client` passed to listeners.
@@ -14,6 +13,8 @@ const client = new WebClient(process.env.BOT_TOKEN, {
   // LogLevel can be imported and used to make debugging simpler
   logLevel: LogLevel.DEBUG,
 });
+
+const channelId = 'C01NN4M0PGE';
 
 const app = new App({
   token: process.env.BOT_TOKEN,
@@ -54,6 +55,7 @@ async function findConversation(name) {
 findConversation('general');
 
 app.event('app_mention', async ({ event, context, client, say }) => {
+  console.log(client, 'client');
   try {
     await say({
       blocks: [
@@ -81,39 +83,29 @@ app.event('app_mention', async ({ event, context, client, say }) => {
   }
 });
 const profjoke = async () => {
-  let joke = (
-    await axios.get(
-      `http://api.icndb.com/jokes/random?limitTo=[nerdy] 
-    &firstName=Prof&exclude=[explicit]`
-    )
-  ).data.value.joke;
-  console.log(joke, 'joke');
-  //   joke = joke.replace(/Chuck Norris/g, 'Prof');
-  //   joke = joke.replace(/Norris'/g, "Prof's");
-  //   joke = joke.replace(/Chuck\'s/g, "Prof's");
-  //   joke = joke.replace(/&quot;/g, `"`);
+  let joke = jokes[Math.floor(Math.random() * jokes.length)];
   return joke;
 };
-
 app.message(':wave:', async ({ message, say }) => {
   await say(`Hello, <@${message.user}>`);
 });
 
 app.message('profjoke', async ({ message, say }) => {
   const joke = await profjoke();
-  await say(`:prof: Prof Norris Joke: ${joke} :prof:`);
+  publishMessage(channelId, `** Prof Norris Joke: ${joke} **`, `:prof:`);
+  //  await say(`:prof: Prof Norris Joke: ${joke} :prof:`);
 });
 
-const channelId = 'C01NN4M0PGE';
-
-async function publishMessage(id, text) {
+async function publishMessage(id, text, icon_emoji) {
   try {
     // Call the chat.postMessage method using the built-in WebClient
     const result = await app.client.chat.postMessage({
       // The token you used to initialize your app
-      token: process.env.SLACK_APP_TOKEN,
+      token: process.env.BOT_TOKEN,
       channel: id,
-      text: text,
+      text,
+      icon_emoji,
+
       // You could also use a blocks[] array to send richer content
     });
 
@@ -124,7 +116,7 @@ async function publishMessage(id, text) {
   }
 }
 
-publishMessage(channelId, 'Hello world :tada:');
+// publishMessage(channelId, 'Hello world :tada:');
 
 // var SlackBot = require('slackbots');
 // // create a bot
