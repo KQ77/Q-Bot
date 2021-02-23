@@ -6,6 +6,7 @@ const { App } = require('@slack/bolt');
 
 // Require the Node Slack SDK package (github.com/slackapi/node-slack-sdk)
 const { WebClient, LogLevel } = require('@slack/web-api');
+const { processStepMiddleware } = require('@slack/bolt/dist/WorkflowStep');
 
 // WebClient insantiates a client that can call API methods
 // When using Bolt, you can use either `app.client` or the `client` passed to listeners.
@@ -24,23 +25,33 @@ const app = new App({
   await app.start();
   console.log('⚡️ Bolt app started');
 })();
-// const init = async () => {
-//   await app.start(process.env.PORT || 3000);
-//   console.log('⚡️ Bolt app started');
-//   const response = await axios.post(
-//     `https://slack.com/api/apps.connections.open
-//     `,
-//     {
-//       headers: {
-//         'Content-type': 'application/json',
-//         Authorization: `Bearer ${process.env.SLACK_APP_TOKEN}`,
-//       },
-//     }
-//   ).data;
-//   console.log(response, 'response');
-// };
 
-// init();
+// Find conversation ID using the conversations.list method
+async function findConversation(name) {
+  try {
+    // Call the conversations.list method using the built-in WebClient
+    const result = await app.client.conversations.list({
+      // The token you used to initialize your app
+      token: process.env.BOT_TOKEN,
+    });
+
+    for (const channel of result.channels) {
+      if (channel.name === name) {
+        conversationId = channel.id;
+
+        // Print result
+        console.log('Found conversation ID: ' + conversationId);
+        // Break from for loop
+        break;
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Find conversation with a specified channel `name`
+findConversation('general');
 
 app.event('app_mention', async ({ event, context, client, say }) => {
   try {
@@ -69,38 +80,52 @@ app.event('app_mention', async ({ event, context, client, say }) => {
     console.error(error);
   }
 });
-
 const profjoke = async () => {
   let joke = (
-    await axios.get(`http://api.icndb.com/jokes/random?limitTo=[nerdy]
-            http://api.icndb.com/jokes/random?limitTo=[nerdy]`)
+    await axios.get(
+      `http://api.icndb.com/jokes/random?limitTo=[nerdy] 
+    &firstName=Prof&exclude=[explicit]`
+    )
   ).data.value.joke;
-  return joke.replace(/Chuck Norris/g, 'Prof');
+  console.log(joke, 'joke');
+  //   joke = joke.replace(/Chuck Norris/g, 'Prof');
+  //   joke = joke.replace(/Norris'/g, "Prof's");
+  //   joke = joke.replace(/Chuck\'s/g, "Prof's");
+  //   joke = joke.replace(/&quot;/g, `"`);
+  return joke;
 };
+
 app.message(':wave:', async ({ message, say }) => {
   await say(`Hello, <@${message.user}>`);
 });
 
 app.message('profjoke', async ({ message, say }) => {
   const joke = await profjoke();
-  await say(`Here's a Prof Joke For You: ${joke}`);
+  await say(`:prof: Prof Norris Joke: ${joke} :prof:`);
 });
-// try {
-//   axios.post(process.env.WEBHOOK_URL, JSON.stringify({ text: 'I am Q-Bot' }), {
-//     headers: {
-//       'Content-type': `application/json`,
-//     },
-//   });
-// } catch (err) {
-//   console.log(err);
-// }
 
-// const handleMessage = (message) => {
-//   console.log(message, 'message');
-//   if (message.includes('prof')) {
-//     profJoke();
-//   }
-// };
+const channelId = 'C01NN4M0PGE';
+
+async function publishMessage(id, text) {
+  try {
+    // Call the chat.postMessage method using the built-in WebClient
+    const result = await app.client.chat.postMessage({
+      // The token you used to initialize your app
+      token: process.env.SLACK_APP_TOKEN,
+      channel: id,
+      text: text,
+      // You could also use a blocks[] array to send richer content
+    });
+
+    // Print result, which includes information about the message (like TS)
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+publishMessage(channelId, 'Hello world :tada:');
+
 // var SlackBot = require('slackbots');
 // // create a bot
 // var bot = new SlackBot({
