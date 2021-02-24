@@ -54,6 +54,14 @@ async function findConversation(name) {
 // Find conversation with a specified channel `name`
 findConversation('general');
 
+// The echo command simply echoes on command
+app.command('/inspire', async ({ command, ack, say }) => {
+  // Acknowledge command request
+
+  await ack();
+
+  await say(`you've been inspired`);
+});
 app.event('app_mention', async ({ event, context, client, say }) => {
   console.log(client, 'client');
   try {
@@ -92,10 +100,38 @@ app.message(':wave:', async ({ message, say }) => {
 
 app.message('profjoke', async ({ message, say }) => {
   const joke = await profjoke();
-  publishMessage(channelId, `** Prof Norris Joke: ${joke} **`, `:prof:`);
+  publishMessage(channelId, `*Prof Norris Joke*: ${joke}`, `:prof:`);
   //  await say(`:prof: Prof Norris Joke: ${joke} :prof:`);
 });
 
+async function publishMoveReminder() {
+  try {
+    await app.client.chat.postMessage({
+      token: process.env.BOT_TOKEN,
+      channel: channelId,
+      icon_emoji: ':qbot:',
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text:
+              '*ACTIVITY REMINDER* \n Neck Extensions\n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>',
+          },
+        },
+        {
+          type: 'image',
+          image_url:
+            'https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg',
+          alt_text: 'inspiration',
+        },
+      ],
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+publishMoveReminder();
 async function publishMessage(id, text, icon_emoji) {
   try {
     // Call the chat.postMessage method using the built-in WebClient
