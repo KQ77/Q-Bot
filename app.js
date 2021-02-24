@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const { jokes } = require('./jokes');
 const { App } = require('@slack/bolt');
-
+const { convertTime } = require('./utils');
 // Require the Node Slack SDK package (github.com/slackapi/node-slack-sdk)
 const { WebClient, LogLevel } = require('@slack/web-api');
 
@@ -90,21 +90,86 @@ app.event('app_mention', async ({ event, context, client, say }) => {
     console.error(error);
   }
 });
+
+//profjoke
 const profjoke = async () => {
   let joke = jokes[Math.floor(Math.random() * jokes.length)];
   return joke;
 };
+app.message('profjoke', async ({ message, say }) => {
+  const joke = await profjoke();
+  publishMessage(channelId, `*Prof Norris Joke*: ${joke}`, `:prof:`);
+});
+
+//waving emoji
 app.message(':wave:', async ({ message, say }) => {
   await say(`Hello, <@${message.user}>`);
 });
 
-app.message('profjoke', async ({ message, say }) => {
-  const joke = await profjoke();
-  publishMessage(channelId, `*Prof Norris Joke*: ${joke}`, `:prof:`);
-  //  await say(`:prof: Prof Norris Joke: ${joke} :prof:`);
+//listen for if time selected in timepicker
+app.action('timepicker-neckstretch', async ({ client, say, payload, ack }) => {
+  await ack();
+  console.log(payload, 'payload');
+  try {
+    // Call the chat.scheduleMessage method using the WebClient
+    const result = await client.chat.scheduleMessage({
+      channel: channelId,
+      icon_emoji: ':qbot:',
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text:
+              '*ACTIVITY REMINDER* \n Neck Extensions\n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>',
+          },
+        },
+        {
+          type: 'image',
+          image_url:
+            'https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg',
+          alt_text: 'neck stretch',
+        },
+      ],
+      // Time to post message, in Unix Epoch timestamp format
+      post_at: convertTime(payload.selected_time),
+    });
+
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
-async function publishMoveReminder() {
+// async function chooseTimeForReminder(action_id) {
+//   await app.client.chat.postMessage({
+//     token: process.env.BOT_TOKEN,
+//     channel: channelId,
+//     blocks: [
+//       {
+//         type: 'section',
+//         text: {
+//           type: 'mrkdwn',
+//           text: 'Choose a time to reschedule reminder',
+//         },
+//         accessory: {
+//           type: 'timepicker',
+//           initial_time: '12:00',
+//           placeholder: {
+//             type: 'plain_text',
+//             text: 'Select time',
+//             emoji: true,
+//           },
+//           action_id: `${action_id}`,
+//         },
+//       },
+//     ],
+//   });
+// }
+
+// chooseTimeForReminder('timepicker-neckstretch');
+
+async function publishMoveReminder(action_id) {
   try {
     await app.client.chat.postMessage({
       token: process.env.BOT_TOKEN,
@@ -123,7 +188,24 @@ async function publishMoveReminder() {
           type: 'image',
           image_url:
             'https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg',
-          alt_text: 'inspiration',
+          alt_text: 'neck stretch',
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: 'Not a good time? Choose a time to reschedule reminder...',
+          },
+          accessory: {
+            type: 'timepicker',
+            initial_time: '12:00',
+            placeholder: {
+              type: 'plain_text',
+              text: 'Select time',
+              emoji: true,
+            },
+            action_id: `${action_id}`,
+          },
         },
       ],
     });
@@ -131,7 +213,7 @@ async function publishMoveReminder() {
     console.log(err);
   }
 }
-publishMoveReminder();
+publishMoveReminder('timepicker-neckstretch');
 async function publishMessage(id, text, icon_emoji) {
   try {
     // Call the chat.postMessage method using the built-in WebClient
@@ -151,43 +233,3 @@ async function publishMessage(id, text, icon_emoji) {
     console.error(error);
   }
 }
-
-// publishMessage(channelId, 'Hello world :tada:');
-
-// var SlackBot = require('slackbots');
-// // create a bot
-// var bot = new SlackBot({
-//   token: process.env.BOT_TOKEN,
-//   name: 'Q-Bot',
-// });
-
-// bot.on('start', function () {
-//   var params = {
-//     icon_emoji: ':qbot:',
-//   };
-//   bot.postMessageToChannel('general', 'Q-Bot at your service!', params);
-// });
-
-// bot.on('message', function (data) {
-//   // all ingoing events https://api.slack.com/rtm
-//   console.log(data, 'data');
-// });
-
-// const profJoke = async () => {
-//   const response = (
-//     await axios.get(`http://api.icndb.com/jokes/random?limitTo=[nerdy]
-//     http://api.icndb.com/jokes/random?limitTo=[nerdy]`)
-//   ).data;
-//   console.log(joke, 'joke');
-//   let joke = response.value;
-//   const params = {
-//     icon_emoji: '::prof:',
-//   };
-//   joke = joke.replace('Chuck Norris', 'Prof');
-//   console.log(joke, 'joke');
-//   bot.postMessageToChannel('general', `Prof Norris: ${joke}`, params);
-// };
-
-// bot.on('error', (error) => console.log(error));
-
-// app.listen(port, () => console.log(`listening on port ${port}`));

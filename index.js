@@ -22,11 +22,3 @@ dotenv.config();
 //   token: 'process.env.BOT_TOKEN', // Add a bot https://my.slack.com/services/new/bot and put the token
 //   name: 'Q-Bot',
 // });
-
-// bot.on('start', function () {
-//   // more information about additional params https://api.slack.com/methods/chat.postMessage
-//   var params = {
-//     icon_emoji: ':robot:',
-//   };
-//   bot.postMessageToChannel('general', 'Q-Bot at your service!!', params);
-// });
