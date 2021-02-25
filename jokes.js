@@ -1,6 +1,6 @@
 const jokes = [
   `Prof Norris doesn't need a debugger, he just stares down the bug until the code confesses`,
-  `Prof doesn't need an account. He just logs in.`,
+  `Prof doesn't need an account. He just logs in`,
   "Prof's programs never exit -- they terminate",
   `Did you know that Prof was in every Star Wars movie? He was The Force`,
   `Code runs faster when Prof Norris watches it`,

@@ -13,7 +13,10 @@ const client = new WebClient(process.env.BOT_TOKEN, {
   // LogLevel can be imported and used to make debugging simpler
   logLevel: LogLevel.DEBUG,
 });
-
+// set up a cron job to schedule something once a day?
+//write a condition to schedule a message each day?
+//OR how about once you schedule a message...you call a function that
+//schedules another message a day later (current time in epoch plus a day which is +however many seconds)
 const channelId = 'C01NN4M0PGE';
 
 const app = new App({
@@ -34,8 +37,8 @@ async function findConversation(name) {
     const result = await app.client.conversations.list({
       // The token you used to initialize your app
       token: process.env.BOT_TOKEN,
+      type: [`public_channel`, 'mpim', 'im'],
     });
-
     for (const channel of result.channels) {
       if (channel.name === name) {
         conversationId = channel.id;
@@ -50,11 +53,9 @@ async function findConversation(name) {
     console.error(error);
   }
 }
-
 // Find conversation with a specified channel `name`
 findConversation('general');
 
-// The echo command simply echoes on command
 app.command('/inspire', async ({ command, ack, say }) => {
   // Acknowledge command request
 
@@ -62,8 +63,42 @@ app.command('/inspire', async ({ command, ack, say }) => {
 
   await say(`you've been inspired`);
 });
+
+const addReminder = async (userId) => {
+  await app.client.reminders.add({
+    token: process.env.USER_TOKEN,
+    text: `to do your neck exercises \n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>
+            <https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg>`,
+    time: 'every day at 9:21pm',
+    user: userId,
+    image_url: `https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg`,
+  });
+};
+
+addReminder('U01NN4M0C6A');
+
+const getMembers = async () => {
+  const response = await app.client.conversations.members({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+  });
+  return response.members;
+};
+
+const setReminders = async () => {
+  const members = await getMembers();
+  await Promise.all(members.map((memberId) => addReminder(memberId)));
+};
+
+const getReminders = async () => {
+  const response = await app.client.reminders.list({
+    token: process.env.USER_TOKEN,
+  });
+};
+
+getReminders();
+
 app.event('app_mention', async ({ event, context, client, say }) => {
-  console.log(client, 'client');
   try {
     await say({
       blocks: [
@@ -71,17 +106,7 @@ app.event('app_mention', async ({ event, context, client, say }) => {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `Thanks for the mention <@${event.user}>! Here's a button`,
-          },
-          accessory: {
-            type: 'button',
-            text: {
-              type: 'plain_text',
-              text: 'Button',
-              emoji: true,
-            },
-            value: 'click_me_123',
-            action_id: 'first_button',
+            text: `Thanks for the mention <@${event.user}>!`,
           },
         },
       ],
@@ -91,19 +116,81 @@ app.event('app_mention', async ({ event, context, client, say }) => {
   }
 });
 
+//if it is 4PM, send inspiration **FIX THIS**
+const scheduleInspireTime = async () => {
+  try {
+    if (new Date().getHours() === 16) {
+      console.log('it is 4pm');
+      await client.chat.postMessage({
+        token: process.env.BOT_TOKEN,
+        channel: channelId,
+        icon_emoji: ':qbot:',
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: 'Get ready to get inspired!',
+            },
+            accessory: {
+              type: 'image',
+              image_url:
+                'https://pbs.twimg.com/profile_images/625633822235693056/lNGUneLX_400x400.jpg',
+              alt_text: 'cute cat',
+            },
+          },
+        ],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+scheduleInspireTime();
+
 //profjoke
 const profjoke = async () => {
   let joke = jokes[Math.floor(Math.random() * jokes.length)];
   return joke;
 };
-app.message('profjoke', async ({ message, say }) => {
+
+app.message('profjoke', async ({ ack, message, say }) => {
   const joke = await profjoke();
-  publishMessage(channelId, `*Prof Norris Joke*: ${joke}`, `:prof:`);
+
+  const blocks = [
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*Prof Norris Joke*  :martial_arts_uniform: ${joke} :martial_arts_uniform:`,
+      },
+    },
+  ];
+  try {
+    // Call the chat.postMessage method using the built-in WebClient
+    const result = await app.client.chat.postMessage({
+      // The token you used to initialize your app
+      token: process.env.BOT_TOKEN,
+      channel: channelId,
+      blocks,
+      icon_emoji: ':prof:',
+
+      // You could also use a blocks[] array to send richer content
+    });
+
+    // Print result, which includes information about the message (like TS)
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 //waving emoji
 app.message(':wave:', async ({ message, say }) => {
   await say(`Hello, <@${message.user}>`);
+});
+
+app.message('fitbot', async ({ message, say }) => {
+  await say(`https://www.fitbit.com/oauth2/authorize`);
 });
 
 //listen for if time selected in timepicker
@@ -213,15 +300,16 @@ async function publishMoveReminder(action_id) {
     console.log(err);
   }
 }
-publishMoveReminder('timepicker-neckstretch');
-async function publishMessage(id, text, icon_emoji) {
+// publishMoveReminder('timepicker-neckstretch');
+
+async function publishMessage(id, blocks, icon_emoji) {
   try {
     // Call the chat.postMessage method using the built-in WebClient
     const result = await app.client.chat.postMessage({
       // The token you used to initialize your app
       token: process.env.BOT_TOKEN,
       channel: id,
-      text,
+      blocks,
       icon_emoji,
 
       // You could also use a blocks[] array to send richer content
@@ -233,3 +321,15 @@ async function publishMessage(id, text, icon_emoji) {
     console.error(error);
   }
 }
+
+const cron = require('node-cron');
+
+// minutes hours dayOfMonth month dayOfWeek
+cron.schedule('42 18 * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+    text: 'testing repeating message',
+  });
+  console.log('message sent to channel at 13:28');
+});

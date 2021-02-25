@@ -8,8 +8,12 @@ function convertTime(time) {
   return date / 1000;
 }
 
-console.log(convertTime(`17:00`));
+// console.log(convertTime(`17:00`));
 
 module.exports = { convertTime };
 
 //if time is 17:00 for us, it will come out to be //12:00 our time
+
+let date = new Date();
+date = date.getHours();
+console.log(new Date().getHours());
