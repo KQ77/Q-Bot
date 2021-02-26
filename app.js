@@ -66,14 +66,96 @@ async function findConversation(name) {
 // Find conversation with a specified channel `name`
 findConversation('general');
 
-app.command('/inspire', async ({ command, body, ack, say }) => {
-  // Acknowledge command request
-  console.log(body, 'body');
+//profjoke
+const profjoke = async () => {
+  let joke = jokes[Math.floor(Math.random() * jokes.length)];
+  return joke;
+};
 
+// listen for commands
+app.command('/profjoke', async ({ command, body, ack, say }) => {
+  const joke = await profjoke();
   await ack();
-  await say(`you've been inspired`);
+  await say({
+    icon_emoji: ':prof:',
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `:prof: *${joke}* :prof:`,
+        },
+      },
+    ],
+  });
 });
 
+app.command(`/inspire`, async ({ command, body, ack, say }) => {
+  await ack();
+  if (body.text === 'me') {
+    await say({
+      icon_emoji: ':sunny:',
+
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `Here you go, <@${body.user_name}>!`,
+          },
+        },
+        {
+          type: 'section',
+          accessory: {
+            type: 'image',
+            image_url:
+              'https://d2zp5xs5cp8zlg.cloudfront.net/image-10028-340.jpg',
+            alt_text: 'sky',
+          },
+          text: {
+            type: 'mrkdwn',
+            text: `${generateRandomQuote(
+              inspireQuotes
+            )} \n\n\nEnjoying these quotes? \nSimply use the command */inspire me* to get another! :sunny:`,
+          },
+        },
+        {
+          type: 'divider',
+        },
+      ],
+    });
+  } else if (body.text === 'dev') {
+    await say({
+      icon_emoji: ':computer:',
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `Here you go, <@${body.user_name}>!`,
+          },
+        },
+        {
+          type: 'section',
+          accessory: {
+            type: 'image',
+            image_url: 'https://dzone.com/storage/temp/12334613-971.jpg',
+            alt_text: 'laptop',
+          },
+          text: {
+            type: 'mrkdwn',
+            text: `${generateRandomQuote(
+              devQuotes
+            )}\n \nEnjoying these quotes? \nSimply use the command */inspire dev* to get another! :nerd_face:`,
+          },
+        },
+        {
+          type: 'divider',
+        },
+      ],
+    });
+  }
+});
 const getMembers = async () => {
   const response = await app.client.conversations.members({
     token: process.env.BOT_TOKEN,
@@ -109,73 +191,35 @@ app.event('app_mention', async ({ event, context, client, say }) => {
   }
 });
 
-//if it is 4PM, send inspiration **FIX THIs with node-cron
-const scheduleInspireTime = async () => {
-  try {
-    if (new Date().getHours() === 16) {
-      console.log('it is 4pm');
-      await client.chat.postMessage({
-        token: process.env.BOT_TOKEN,
-        channel: channelId,
-        icon_emoji: ':qbot:',
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: 'Get ready to get inspired!',
-            },
-            accessory: {
-              type: 'image',
-              image_url:
-                'https://pbs.twimg.com/profile_images/625633822235693056/lNGUneLX_400x400.jpg',
-              alt_text: 'cute cat',
-            },
-          },
-        ],
-      });
-    }
-  } catch (err) {
-    console.log(err);
-  }
-};
-scheduleInspireTime();
+// app.message('profjoke', async ({ ack, message, say }) => {
+//   const joke = await profjoke();
 
-//profjoke
-const profjoke = async () => {
-  let joke = jokes[Math.floor(Math.random() * jokes.length)];
-  return joke;
-};
+//   const blocks = [
+//     {
+//       type: 'section',
+//       text: {
+//         type: 'mrkdwn',
+//         text: `*Prof Norris Joke*  :martial_arts_uniform: ${joke} :martial_arts_uniform:`,
+//       },
+//     },
+//   ];
+//   try {
+//     // Call the chat.postMessage method using the built-in WebClient
+//     const result = await app.client.chat.postMessage({
+//       // The token you used to initialize your app
+//       token: process.env.BOT_TOKEN,
+//       channel: channelId,
+//       blocks,
+//       icon_emoji: ':prof:',
 
-app.message('profjoke', async ({ ack, message, say }) => {
-  const joke = await profjoke();
+//       // You could also use a blocks[] array to send richer content
+//     });
 
-  const blocks = [
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*Prof Norris Joke*  :martial_arts_uniform: ${joke} :martial_arts_uniform:`,
-      },
-    },
-  ];
-  try {
-    // Call the chat.postMessage method using the built-in WebClient
-    const result = await app.client.chat.postMessage({
-      // The token you used to initialize your app
-      token: process.env.BOT_TOKEN,
-      channel: channelId,
-      blocks,
-      icon_emoji: ':prof:',
-
-      // You could also use a blocks[] array to send richer content
-    });
-
-    // Print result, which includes information about the message (like TS)
-  } catch (error) {
-    console.error(error);
-  }
-});
+//     // Print result, which includes information about the message (like TS)
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
 
 //waving emoji
 app.message(':wave:', async ({ message, say }) => {
@@ -208,12 +252,6 @@ const getActivity = async () => {
   }
 };
 
-// console.log(userInfo, 'userInfo');
-// let activityResponse;
-// if (process.env.FITBIT_ACCESS_TOKEN) {
-//   console.log('we have a fb at in app.js line 220');
-//   getActivity().then((response) => (activityResponse = { ...response }));
-// }
 app.message('activity', async ({ message, say }) => {
   await say(
     `Here are your average daily steps: ${userInfo.user.averageDailySteps}`
@@ -282,50 +320,50 @@ app.action('timepicker-neckstretch', async ({ client, say, payload, ack }) => {
 
 // chooseTimeForReminder('timepicker-neckstretch');
 
-async function publishMoveReminder(action_id) {
-  try {
-    await app.client.chat.postMessage({
-      token: process.env.BOT_TOKEN,
-      channel: channelId,
-      icon_emoji: ':qbot:',
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text:
-              '*ACTIVITY REMINDER* \n Neck Extensions\n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>',
-          },
-        },
-        {
-          type: 'image',
-          image_url:
-            'https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg',
-          alt_text: 'neck stretch',
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: 'Not a good time? Choose a time to reschedule reminder...',
-          },
-          accessory: {
-            type: 'timepicker',
-            initial_time: '12:00',
-            placeholder: {
-              type: 'plain_text',
-              text: 'Select time',
-              emoji: true,
-            },
-            action_id: `${action_id}`,
-          },
-        },
-      ],
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
+// async function publishMoveReminder(action_id) {
+//   try {
+//     await app.client.chat.postMessage({
+//       token: process.env.BOT_TOKEN,
+//       channel: channelId,
+//       icon_emoji: ':qbot:',
+//       blocks: [
+//         {
+//           type: 'section',
+//           text: {
+//             type: 'mrkdwn',
+//             text:
+//               '*ACTIVITY REMINDER* \n Neck Extensions\n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>',
+//           },
+//         },
+//         {
+//           type: 'image',
+//           image_url:
+//             'https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg',
+//           alt_text: 'neck stretch',
+//         },
+//         {
+//           type: 'section',
+//           text: {
+//             type: 'mrkdwn',
+//             text: 'Not a good time? Choose a time to reschedule reminder...',
+//           },
+//           accessory: {
+//             type: 'timepicker',
+//             initial_time: '12:00',
+//             placeholder: {
+//               type: 'plain_text',
+//               text: 'Select time',
+//               emoji: true,
+//             },
+//             action_id: `${action_id}`,
+//           },
+//         },
+//       ],
+//     });
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }
 // publishMoveReminder('timepicker-neckstretch');
 
 async function publishMessage(id, blocks, icon_emoji) {

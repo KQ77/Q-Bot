@@ -5,7 +5,7 @@ const jokes = [
   `Did you know that Prof was in every Star Wars movie? He was The Force`,
   `Code runs faster when Prof Norris watches it`,
   `Prof Norris once won a game of connect four in 3 moves`,
-  `Prof Norris uses a night light. Not because Prof is afraid of the dark, but the dark is afraid of Prof`,
+  `Prof Norris uses a night light. \n Not because Prof is afraid of the dark, but the dark is afraid of Prof`,
   `Prof Norris can write to an output stream`,
   `Prof Norris knows the value of undefined`,
   `Prof Norris doesn't need version control. His code commits itself out of pure fear`,
