@@ -66,11 +66,11 @@ async function findConversation(name) {
 // Find conversation with a specified channel `name`
 findConversation('general');
 
-app.command('/inspire', async ({ command, ack, say }) => {
+app.command('/inspire', async ({ command, body, ack, say }) => {
   // Acknowledge command request
+  console.log(body, 'body');
 
   await ack();
-
   await say(`you've been inspired`);
 });
 
@@ -92,6 +92,7 @@ const getMembers = async () => {
 
 app.event('app_mention', async ({ event, context, client, say }) => {
   try {
+    console.log(event.user, 'event.user after mentioning qbot');
     await say({
       blocks: [
         {
@@ -448,5 +449,14 @@ cron.schedule(' 0 15 * * *', async function () {
         },
       },
     ],
+  });
+});
+
+//posture reminder - every two hours
+cron.schedule('0 */2 * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+    blocks: postureBlocks,
   });
 });

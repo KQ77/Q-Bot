@@ -158,8 +158,19 @@ const postureBlocks = [
     text: {
       type: 'mrkdwn',
       text:
-        '*Check yourself before you wreck yourself!*\n\nUse this reference to make any necessary adjustments to your posture. \n:qbot:And remember - Q-Bot cares! :qbot:',
+        '*Check yourself before you wreck yourself!*\n\nUse this reference to make any necessary adjustments to your posture. \n:qbot:And remember - Q-Bot cares! :qbot:\n',
     },
+  },
+  {
+    type: 'section',
+    text: {
+      type: 'mrkdwn',
+      text:
+        'Want to access this ergonomics guide at any time? Simply type */posture*  ',
+    },
+  },
+  {
+    type: 'divider',
   },
   {
     type: 'image',
@@ -169,12 +180,13 @@ const postureBlocks = [
   },
 ];
 
-//remember daily reminder for ergonomic setup
+//make /posture
+//make /inspire
+//make /devquote
+//make /help
+//make /exercise?? - list all exercises in one spot?
 //reminders/tips
 //move bot walk reminder
-//move bot lumbar spinal extension exercise reminder
-//inspirational quote once a day or /inspire
-//devQuote once a day or /devquote
-//
+// render one piece of info regarding fitbit user
 
 module.exports = { chinBlocks, neckBlocks, lumbarBlocks, postureBlocks };
