@@ -6,12 +6,13 @@ var passport = require('passport');
 const dotenv = require('dotenv');
 const axios = require('axios');
 dotenv.config();
-let userInfo = {};
-module.exports = { userInfo };
+
 // var FitbitStrategy = require('passport-fitbit-oauth2').FitbitOAuth2Strategy;
 app.use(express.json());
 app.use(express.urlencoded());
 
+let userInfo = {};
+module.exports = { userInfo };
 // app.use(passport.initialize());
 
 // passport.use(
@@ -88,12 +89,12 @@ app.get(`/auth/fitbit/callback`, async (req, res, next) => {
     userInfo = { ...userInfo, ...userResponse };
     res.send(
       `<html>
-        <head>
-          <style>
-          body {text-align: center; color: purple;}
-          div {padding: 3rem;}
-          </style>
-        </head>
+        // <head>
+        //   <style>
+        //   body {text-align: center; color: purple;}
+        //   div {padding: 3rem;}
+        //   </style>
+        // </head>
         <body>
           <div>
             <h1>Hello, ${userResponse.user.displayName} Thanks for authorizing Q-Bot to access FitBit! Head back to slack and see what you can do!
@@ -107,33 +108,33 @@ app.get(`/auth/fitbit/callback`, async (req, res, next) => {
   }
 });
 console.log(process.env.FITBIT_ACCESS_TOKEN, 'process.env FAT');
-const getActivity = async () => {
-  try {
-    const response = (
-      await axios.get(
-        `https://api.fitbit.com/1/user/-/activities/date/2021-02-25.json
-      `,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.FITBIT_ACCESS_TOKEN}`,
-          },
-        }
-      )
-    ).data;
-    console.log(response, 'response from api');
-    return response;
-  } catch (err) {
-    console.log(err);
-  }
-};
+// const getActivity = async () => {
+//   try {
+//     const response = (
+//       await axios.get(
+//         `https://api.fitbit.com/1/user/-/activities/date/2021-02-25.json
+//       `,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${process.env.FITBIT_ACCESS_TOKEN}`,
+//           },
+//         }
+//       )
+//     ).data;
+//     console.log(response, 'response from api');
+//     return response;
+//   } catch (err) {
+//     console.log(err);
+//   }
+// };
 
-let activityResponse;
-if (process.env.FITBIT_ACCESS_TOKEN) {
-  console.log('we have a fb at in app.js line 220');
-  getActivity().then((response) => (activityResponse = { ...response }));
-}
-console.log(activityResponse, 'activity response in server.js');
-app.get('/auth/fitbit/success', function (req, res, next) {
-  console.log('fitbit success');
-});
+// let activityResponse;
+// if (process.env.FITBIT_ACCESS_TOKEN) {
+//   console.log('we have a fb at in app.js line 220');
+//   getActivity().then((response) => (activityResponse = { ...response }));
+// }
+// console.log(activityResponse, 'activity response in server.js');
+// app.get('/auth/fitbit/success', function (req, res, next) {
+//   console.log('fitbit success');
+// });
 app.listen(port, () => console.log(`listening on port ${port}`));

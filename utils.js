@@ -8,12 +8,16 @@ function convertTime(time) {
   return date / 1000;
 }
 
+function generateRandomQuote(array) {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}
 // console.log(convertTime(`17:00`));
 
-module.exports = { convertTime };
+module.exports = { convertTime, generateRandomQuote };
 
 //if time is 17:00 for us, it will come out to be //12:00 our time
 
 let date = new Date();
 date = date.getHours();
-console.log(new Date().getHours());
+// console.log(new Date().getHours());

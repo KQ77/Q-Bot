@@ -3,7 +3,17 @@ const dotenv = require('dotenv');
 dotenv.config();
 const { jokes } = require('./jokes');
 const { App } = require('@slack/bolt');
-const { convertTime } = require('./utils');
+const { convertTime, generateRandomQuote } = require('./utils');
+const { devQuotes, inspireQuotes } = require('./quotes');
+
+//import blocks //
+const {
+  chinBlocks,
+  neckBlocks,
+  lumbarBlocks,
+  postureBlocks,
+} = require('./blocks');
+
 // Require the Node Slack SDK package (github.com/slackapi/node-slack-sdk)
 const { WebClient, LogLevel } = require('@slack/web-api');
 
@@ -64,19 +74,6 @@ app.command('/inspire', async ({ command, ack, say }) => {
   await say(`you've been inspired`);
 });
 
-const addReminder = async (userId) => {
-  await app.client.reminders.add({
-    token: process.env.USER_TOKEN,
-    text: `to do your neck exercises \n <https://youtu.be/ZY3s2Y1dTck|click here for instructions>
-            <https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg>`,
-    time: 'every day at 9:21pm',
-    user: userId,
-    image_url: `https://acewebcontent.azureedge.net/exercise-library/large/204-4.jpg`,
-  });
-};
-
-addReminder('U01NN4M0C6A');
-
 const getMembers = async () => {
   const response = await app.client.conversations.members({
     token: process.env.BOT_TOKEN,
@@ -85,18 +82,13 @@ const getMembers = async () => {
   return response.members;
 };
 
-const setReminders = async () => {
-  const members = await getMembers();
-  await Promise.all(members.map((memberId) => addReminder(memberId)));
-};
+// const getReminders = async () => {
+//   const response = await app.client.reminders.list({
+//     token: process.env.USER_TOKEN,
+//   });
+// };
 
-const getReminders = async () => {
-  const response = await app.client.reminders.list({
-    token: process.env.USER_TOKEN,
-  });
-};
-
-getReminders();
+// getReminders();
 
 app.event('app_mention', async ({ event, context, client, say }) => {
   try {
@@ -215,7 +207,7 @@ const getActivity = async () => {
   }
 };
 
-const { userInfo } = require('./server');
+// console.log(userInfo, 'userInfo');
 // let activityResponse;
 // if (process.env.FITBIT_ACCESS_TOKEN) {
 //   console.log('we have a fb at in app.js line 220');
@@ -344,8 +336,6 @@ async function publishMessage(id, blocks, icon_emoji) {
       channel: id,
       blocks,
       icon_emoji,
-
-      // You could also use a blocks[] array to send richer content
     });
 
     // Print result, which includes information about the message (like TS)
@@ -355,14 +345,108 @@ async function publishMessage(id, blocks, icon_emoji) {
   }
 }
 
+//scheduled tasks
 const cron = require('node-cron');
 
 // minutes hours dayOfMonth month dayOfWeek
-cron.schedule('42 18 * * *', async function () {
+
+// chin tuck exercise reminder - every hour on the 15 minute mark
+cron.schedule('15 * * * *', async function () {
   await app.client.chat.postMessage({
     token: process.env.BOT_TOKEN,
     channel: channelId,
-    text: 'testing repeating message',
+    blocks: chinBlocks,
   });
-  console.log('message sent to channel at 13:28');
+});
+
+// neck extension exercise prompt every hour on the dot
+cron.schedule('0 * * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+    blocks: neckBlocks,
+  });
+});
+
+//lumbar extension exercise promt - every hour on the half hour
+cron.schedule('30 * * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+    blocks: lumbarBlocks,
+  });
+});
+
+// developer quote - every day at 12pm
+cron.schedule('0 12 * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+    blocks: [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: ':nerd_face: Your Daily (aspiring) Developer Quote',
+          emoji: true,
+        },
+      },
+      {
+        type: 'divider',
+      },
+      {
+        type: 'section',
+        accessory: {
+          type: 'image',
+          image_url: 'https://dzone.com/storage/temp/12334613-971.jpg',
+          alt_text: 'laptop',
+        },
+        text: {
+          type: 'mrkdwn',
+          text: `${generateRandomQuote(
+            devQuotes
+          )}\n \nEnjoying these quotes? \nSimply use the command */devquote* to get another! :nerd_face:`,
+        },
+      },
+    ],
+
+    icon_emoji: ':computer:',
+  });
+});
+
+//inspirational quote - every day at 3pm
+cron.schedule(' 0 15 * * *', async function () {
+  await app.client.chat.postMessage({
+    token: process.env.BOT_TOKEN,
+    channel: channelId,
+
+    blocks: [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: ':sunny: Daily Inspiration :sunny: ',
+          emoji: true,
+        },
+      },
+      {
+        type: 'divider',
+      },
+      {
+        type: 'section',
+        accessory: {
+          type: 'image',
+          image_url:
+            'https://d2zp5xs5cp8zlg.cloudfront.net/image-10028-340.jpg',
+          alt_text: 'sky',
+        },
+        text: {
+          type: 'mrkdwn',
+          text: `${generateRandomQuote(
+            inspireQuotes
+          )} \n\n\nEnjoying these quotes? \nSimply use the command */inspire* to get another! :sunny:`,
+        },
+      },
+    ],
+  });
 });
