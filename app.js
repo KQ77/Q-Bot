@@ -116,7 +116,7 @@ app.event('app_mention', async ({ event, context, client, say }) => {
   }
 });
 
-//if it is 4PM, send inspiration **FIX THIS**
+//if it is 4PM, send inspiration **FIX THIs with node-cron
 const scheduleInspireTime = async () => {
   try {
     if (new Date().getHours() === 16) {
@@ -190,9 +190,42 @@ app.message(':wave:', async ({ message, say }) => {
 });
 
 app.message('fitbot', async ({ message, say }) => {
-  await say(`https://www.fitbit.com/oauth2/authorize`);
+  await say(
+    `https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=22C43Z&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauth%2Ffitbit%2Fcallback&scope=activity%20heartrate%20location%20nutrition%20profile%20settings%20sleep%20social%20weight&expires_in=604800`
+  );
 });
 
+const getActivity = async () => {
+  try {
+    const response = (
+      await axios.get(
+        `https://api.fitbit.com/1/user/-/activities/date/2021-02-25.json
+    `,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.FITBIT_ACCESS_TOKEN}`,
+          },
+        }
+      )
+    ).data;
+    console.log(response, 'response from api');
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const { userInfo } = require('./server');
+// let activityResponse;
+// if (process.env.FITBIT_ACCESS_TOKEN) {
+//   console.log('we have a fb at in app.js line 220');
+//   getActivity().then((response) => (activityResponse = { ...response }));
+// }
+app.message('activity', async ({ message, say }) => {
+  await say(
+    `Here are your average daily steps: ${userInfo.user.averageDailySteps}`
+  );
+});
 //listen for if time selected in timepicker
 app.action('timepicker-neckstretch', async ({ client, say, payload, ack }) => {
   await ack();

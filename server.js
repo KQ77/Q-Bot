@@ -6,7 +6,8 @@ var passport = require('passport');
 const dotenv = require('dotenv');
 const axios = require('axios');
 dotenv.config();
-
+let userInfo = {};
+module.exports = { userInfo };
 // var FitbitStrategy = require('passport-fitbit-oauth2').FitbitOAuth2Strategy;
 app.use(express.json());
 app.use(express.urlencoded());
@@ -52,11 +53,12 @@ app.get(`/auth/fitbit/callback`, async (req, res, next) => {
   console.log(code, 'code');
   const secretString = `${process.env.FITBIT_CLIENT_ID}:${process.env.FITBIT_SECRET}`;
   const data = Buffer.from(secretString).toString('base64');
-
+  let activityResponse;
   const redirectUri = encodeURIComponent(
     `http://localhost:8000/auth/fitbit/callback`
   );
   console.log(redirectUri, 'redirectUri');
+
   try {
     const response = (
       await axios.post(
@@ -72,6 +74,9 @@ app.get(`/auth/fitbit/callback`, async (req, res, next) => {
     ).data;
     console.log(response);
     const { access_token, refresh_token, user_id } = response;
+    process.env.FITBIT_ACCESS_TOKEN = access_token;
+    process.env.FITBIT_USER_ID = user_id;
+
     const userResponse = (
       await axios.get(`https://api.fitbit.com/1/user/-/profile.json`, {
         headers: {
@@ -80,15 +85,54 @@ app.get(`/auth/fitbit/callback`, async (req, res, next) => {
       })
     ).data;
     console.log(userResponse, 'userResponse');
+    userInfo = { ...userInfo, ...userResponse };
     res.send(
-      `<html><body><div><h1>Hello, ${userResponse.user.displayName} Thanks for authorizing Q-Bot to access FitBit! Head back to slack and see what you can do!</h2></div></body></html>`
+      `<html>
+        <head>
+          <style>
+          body {text-align: center; color: purple;}
+          div {padding: 3rem;}
+          </style>
+        </head>
+        <body>
+          <div>
+            <h1>Hello, ${userResponse.user.displayName} Thanks for authorizing Q-Bot to access FitBit! Head back to slack and see what you can do!
+            </h1>
+          </div>
+        </body>
+       </html>`
     );
   } catch (err) {
-    // console.log(err);
-    console.log(err.response.data.errors, 'response data errors');
+    console.log(err);
   }
 });
+console.log(process.env.FITBIT_ACCESS_TOKEN, 'process.env FAT');
+const getActivity = async () => {
+  try {
+    const response = (
+      await axios.get(
+        `https://api.fitbit.com/1/user/-/activities/date/2021-02-25.json
+      `,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.FITBIT_ACCESS_TOKEN}`,
+          },
+        }
+      )
+    ).data;
+    console.log(response, 'response from api');
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+};
 
+let activityResponse;
+if (process.env.FITBIT_ACCESS_TOKEN) {
+  console.log('we have a fb at in app.js line 220');
+  getActivity().then((response) => (activityResponse = { ...response }));
+}
+console.log(activityResponse, 'activity response in server.js');
 app.get('/auth/fitbit/success', function (req, res, next) {
   console.log('fitbit success');
 });
